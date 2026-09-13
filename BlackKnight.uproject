@@ -2,10 +2,10 @@
 	"FileVersion": 3,
 	"EngineAssociation": "5.8",
 	"Category": "",
-	"Description": "",
+	"Description": "The Black Knight: Beginnings",
 	"Modules": [
 		{
-			"Name": "MyProject",
+			"Name": "BlackKnight",
 			"Type": "Runtime",
 			"LoadingPhase": "Default",
 			"AdditionalDependencies": [
@@ -37,6 +37,10 @@
 		},
 		{
 			"Name": "ModelContextProtocol",
+			"Enabled": true
+		},
+		{
+			"Name": "ALS",
 			"Enabled": true
 		}
 	]

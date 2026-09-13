@@ -10,7 +10,7 @@
 #include "Engine/LocalPlayer.h"
 #include "Engine/World.h"
 #include "Blueprint/UserWidget.h"
-#include "MyProject.h"
+#include "BlackKnight.h"
 #include "Widgets/Input/SVirtualJoystick.h"
 
 void APlatformingPlayerController::BeginPlay()
@@ -57,7 +57,7 @@ void APlatformingPlayerController::SetupInputComponent()
 
 		} else {
 
-			UE_LOG(LogMyProject, Error, TEXT("Could not spawn mobile controls widget."));
+			UE_LOG(LogBlackKnight, Error, TEXT("Could not spawn mobile controls widget."));
 
 		}
 

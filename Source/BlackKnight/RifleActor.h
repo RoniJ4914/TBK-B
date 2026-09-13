@@ -3,17 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/Pawn.h"
-#include "Rifle.generated.h"
+#include "GameFramework/Actor.h"
+#include "RifleActor.generated.h"
 
 UCLASS()
-class MYPROJECT_API ARifle : public APawn
+class BLACKKNIGHT_API ARifleActor : public AActor
 {
 	GENERATED_BODY()
-
-public:
-	// Sets default values for this pawn's properties
-	ARifle();
+	
+public:	
+	// Sets default values for this actor's properties
+	ARifleActor();
 
 protected:
 	// Called when the game starts or when spawned
@@ -22,8 +22,5 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 };

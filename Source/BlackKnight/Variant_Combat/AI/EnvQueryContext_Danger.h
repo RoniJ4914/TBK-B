@@ -11,7 +11,7 @@
  *  Returns the enemy character's last known danger location
  */
 UCLASS()
-class MYPROJECT_API UEnvQueryContext_Danger : public UEnvQueryContext
+class BLACKKNIGHT_API UEnvQueryContext_Danger : public UEnvQueryContext
 {
 	GENERATED_BODY()
 	

@@ -37,6 +37,10 @@ ehthumbs.db
 Desktop.ini
 .DS_Store
 
+# Local agent/tooling config (machine-specific, not part of the game project)
+.claude/
+.mcp.json
+
 # UE autosave / backup / crash artifacts
 Content/**/*_BuiltData.uasset
 *.autosave

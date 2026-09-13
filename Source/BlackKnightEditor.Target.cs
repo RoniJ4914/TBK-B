@@ -3,13 +3,13 @@
 using UnrealBuildTool;
 using System.Collections.Generic;
 
-public class MyProjectTarget : TargetRules
+public class BlackKnightEditorTarget : TargetRules
 {
-	public MyProjectTarget(TargetInfo Target) : base(Target)
+	public BlackKnightEditorTarget(TargetInfo Target) : base(Target)
 	{
-		Type = TargetType.Game;
+		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V7;
 		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_8;
-		ExtraModuleNames.Add("MyProject");
+		ExtraModuleNames.Add("BlackKnight");
 	}
 }
