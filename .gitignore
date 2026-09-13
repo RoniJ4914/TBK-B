@@ -1,0 +1,44 @@
+# ---------------------------------------------------------------
+# Unreal Engine 5 .gitignore — The Black Knight: Beginnings
+# ---------------------------------------------------------------
+
+# Compiled / generated output
+Binaries/
+DerivedDataCache/
+Intermediate/
+Saved/
+Build/
+!Build/*/**/*.ico
+
+# Plugin build output (keep plugin source + content)
+Plugins/**/Binaries/
+Plugins/**/Intermediate/
+
+# IDE / toolchain
+.vs/
+.vscode/
+.idea/
+*.sln
+*.slnx
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.xcodeproj/
+*.xcworkspace/
+Makefile
+CMakeLists.txt
+.ignore
+
+# OS cruft
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+.DS_Store
+
+# UE autosave / backup / crash artifacts
+Content/**/*_BuiltData.uasset
+*.autosave
+*.tmp
+*.bak
