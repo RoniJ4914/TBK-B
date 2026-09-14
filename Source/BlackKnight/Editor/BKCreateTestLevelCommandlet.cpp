@@ -5,7 +5,6 @@
 #if WITH_EDITOR
 #include "Editor/UnrealEdEngine.h"
 #include "FileHelpers.h"
-#include "GameFramework/PlayerStart.h"
 #include "GameFramework/WorldSettings.h"
 #include "UnrealEdGlobals.h"
 #endif
@@ -13,14 +12,20 @@
 int32 UBKCreateTestLevelCommandlet::Main(const FString& Params)
 {
 #if WITH_EDITOR
-	UWorld* World = UEditorLoadingAndSavingUtils::NewBlankMap(/*bSaveExistingMap=*/false);
+	// Instantiated from the engine's own "Default" new-level template (the same
+	// one File > New Level > Default uses) rather than NewBlankMap(), which
+	// produces a truly empty world: no floor, no light, no sky. That left the
+	// player falling through a lit-by-nothing void - a black screen.
+	// Template_Default already ships a floor, DirectionalLight, SkyLight,
+	// SkyAtmosphere, ExponentialHeightFog, VolumetricCloud and a PlayerStart.
+	static const FString TemplatePath{TEXT("/Engine/Maps/Templates/Template_Default")};
+
+	UWorld* World = UEditorLoadingAndSavingUtils::NewMapFromTemplate(TemplatePath, /*bSaveExistingMap=*/false);
 	if (!IsValid(World))
 	{
-		UE_LOG(LogTemp, Error, TEXT("BKCreateTestLevel: NewBlankMap failed."));
+		UE_LOG(LogTemp, Error, TEXT("BKCreateTestLevel: NewMapFromTemplate(%s) failed."), *TemplatePath);
 		return 1;
 	}
-
-	World->SpawnActor<APlayerStart>(FVector{0.0f, 0.0f, 100.0f}, FRotator::ZeroRotator);
 
 	// No per-level override: this level inherits GlobalDefaultGameMode
 	// (/Script/BlackKnight.BKGameMode) from DefaultEngine.ini.
