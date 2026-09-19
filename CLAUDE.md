@@ -80,10 +80,11 @@ already made and verified.
   - All ALS asset defaults (mesh, anim BP, character/movement settings,
     camera mesh/anim/settings, input mapping context + actions) are wired in
     **C++ constructors via `ConstructorHelpers`**, not a Blueprint subclass —
-    both classes are playable with zero Blueprint work. Asset paths are
-    collected in the `BKPlayerCharacterAssets` namespace at the top of
-    `BKPlayerCharacter.cpp` — check there first if an asset needs swapping
-    for the art pass.
+    both classes are playable with zero Blueprint work. Character art paths
+    are in the `BKCharacterAssets` namespace at the top of
+    `BKCombatCharacter.cpp` (shared by player and enemies); input asset paths
+    in `BKPlayerInputAssets` in `BKPlayerCharacter.cpp` — check there first
+    if an asset needs swapping for the art pass.
   - `UEditorLoadingAndSavingUtils::NewBlankMap`/`SaveMap` vs
     `FEditorFileUtils` — easy to get wrong, they're different classes in
     `FileHelpers.h`; only the former pair matches by signature.
@@ -124,38 +125,64 @@ already made and verified.
   session** — last known state was mid-fix (black screen root-caused and
   patched, user hadn't retried when this doc was written). Confirm that
   before treating M1 as fully closed.
-- Milestones 2-6 (see original brief, summarized below): not started.
+- **Milestone 2 (combat core): implemented, uncommitted, awaiting user
+  review/PIE check.** Compiles clean. Acceptance verified headlessly via
+  `BKCombatSelfTest` (player kills the test dummy with light and heavy
+  combos; dummy perceives, chases and hits back). Details below.
+- Milestones 3-6: not started.
 
-## Next: Milestone 2 — Combat core ("simple but effective")
-
-Scope from the original brief:
-- Lock-on melee combat: light/heavy attack, dodge/roll with i-frames,
-  block **or** parry (pick one — present tradeoffs to the user before
-  building, don't decide unilaterally), stamina resource.
-- One enemy AI base class (Behavior Tree + Blackboard) with patrol/chase/
-  attack states, usable as a parent for future enemy types.
-- Acceptance: player can kill a test dummy enemy in `L_TestLevel`; damage,
-  health, and death are functional end-to-end.
-
-Suggested build order:
-1. Stamina resource component on the player character (regen/drain rules).
-2. Dodge/roll with i-frames — replace ALS's placeholder roll
-   (`ABKPlayerCharacter::Input_OnRoll` → `StartRollingGrounded`) with a
-   combat-aware version: i-frame window, stamina cost.
-3. **Decision point**: block vs. parry — ask the user, present tradeoffs,
-   before implementing either.
-4. Lock-on targeting: target selection + camera behavior layered onto
-   `UBKCameraComponent`.
-5. Light/heavy attack combo: animation-driven hit windows, damage dealing.
-6. Damage/health pipeline: shared interface so player and future enemies use
-   the same system (check if ALS or the template's `Variant_Combat` folder —
-   `CombatDamageable`, `CombatAttacker` interfaces already exist there from
-   the original template — has something reusable before building fresh;
-   these are unrenamed template leftovers, evaluate before reusing).
-7. Enemy AI base class: Behavior Tree + Blackboard, patrol → chase → attack.
-8. Test dummy enemy: minimal concrete subclass proving the pipeline
-   end-to-end.
-9. Compile clean, verify headlessly where possible, report back before M3.
+## Milestone 2 — what exists (decisions made, don't re-litigate)
+- **Class layout**: `ABKCombatCharacter : AAlsCharacter, IBKDamageable`
+  (Character/) is the shared base — ALS art wiring, `UBKHealthComponent`,
+  `UBKMeleeComponent`, stagger, death (ALS ragdoll). `ABKPlayerCharacter`
+  adds camera/lock-on, input, `UBKStaminaComponent`, i-frame roll, block.
+  `ABKEnemyCharacter` (AI/) adds AI tuning; `ABKTestDummyEnemy` is the
+  minimal concrete subclass (60 HP, 0.5x damage) placed in `L_TestLevel`.
+- **Combat state rides ALS's `LocomotionAction` tag slot**
+  (`BK.LocomotionAction.Attacking/Blocking/Staggered`, Combat/BKCombatTags),
+  so ALS auto-suppresses jump/mantle/roll during them. `CanStartCombatAction`
+  mirrors ALS's `IsRollingAllowedToStart`.
+- **Block + parry integrated** (user's call): hold RMB; a hit in the first
+  0.2s is a Perfect Block (no damage/stamina, staggers attacker), otherwise
+  75% mitigation + stamina chip, guard-break at 0 stamina.
+- **Combos** (user asked for 4 light, 2-3 heavy): `UBKMeleeComponent` holds
+  `LightCombo` (4 steps) / `HeavyCombo` (3 steps), one montage per step;
+  input buffered before a step's `BKAnimNotify_ComboWindow` plays the next
+  montage (cross-fade). Hits come from `BKAnimNotify_AttackTrace`; notifies
+  from a fading-out previous step are ignored. AI uses `StartAttackChain`.
+- **Attack animations**: only 4 unarmed clips exist (template Manny,
+  `MM_Attack_01-03`, `MM_ChargedAttack`), so steps reuse clips at different
+  play rates. They're **baked onto ALS's `SK_Als`** by a commandlet
+  (component-space rotation retarget, ALS bone lengths). Playing the Manny
+  clips directly on ALS's mesh detached the hands (runtime remapping let
+  Manny's bone translations through) — don't go back to that. Montages use
+  ALS's `PostLocomotion` slot, cubic 0.15s in / 0.35s out, and copy
+  `Layer*`/`ViewBlock` curves from ALS's roll (value -1 = full-body action;
+  ALS adds montage curves onto the base overlay values).
+- **Lock-on** (MMB) lives in `UBKCameraComponent`: steers control rotation
+  (ALS camera follows it); player switches to ViewDirection rotation mode.
+- **Enemy AI**: `ABKEnemyAIController` (sight perception → Blackboard
+  `TargetActor`, 4s lose-target grace) runs `BT_BK_Enemy`: Selector
+  [Combat: has target, abort Both → MoveTo → `BTTask_BKMeleeAttack` → Wait]
+  / [Patrol: `BTTask_BKFindPatrolLocation` → MoveTo → Wait]. Navmesh is
+  generated at runtime (`RuntimeGeneration=Dynamic` in DefaultEngine.ini)
+  from a NavMeshBoundsVolume saved in `L_TestLevel`.
+- **Inputs**: `IMC_BK_Combat` (priority 1 over ALS's IMC): RMB Block, LMB
+  Light, F Heavy, MMB Lock-on. RMB overlaps ALS's `IA_Als_Aim`, which the
+  player doesn't bind — harmless.
+- **All M2 content is generated by commandlets** (and `Content/` is
+  untracked until Git LFS is set up), run in this order after a compile:
+  `-run=BKCreateCombatInputAssets`, `-run=BKCreateCombatAnimations`,
+  `-run=BKCreateEnemyAI`, `-run=BKCreateTestLevel`. First runs log
+  "CDO Constructor ... Failed to find" for assets not generated yet — expected.
+- **Headless acceptance test**: `-game -NullRHI -ExecCmds="EnableCheats,
+  BKCombatSelfTest"` (optional arg `Light`/`Heavy`), grep the log for
+  `BKCombatSelfTest: PASSED`. `showdebug Combat` in PIE shows combat state.
+- **Known gaps / not built**: no hit reactions or stagger animation, no
+  player respawn (player ragdolls and stays down), no teams (enemies could
+  hit each other), attacks don't turn toward input without lock-on, no
+  gamepad bindings, no lock-on target switching, no enemy visual
+  distinction (same ALS mesh), no movement slowdown while blocking.
 
 ## Later milestones (context only, not started)
 - **M3 Progression/economy**: single currency, data-table inventory, one

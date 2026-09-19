@@ -15,10 +15,14 @@ public class BlackKnight : ModuleRules
 			"InputCore",
 			"EnhancedInput",
 			"AIModule",
+			"GameplayTasks",
+			"NavigationSystem",
+			"Niagara",
 			"StateTreeModule",
 			"GameplayStateTreeModule",
 			"UMG",
 			"Slate",
+			"SlateCore",
 			"GameplayTags",
 			"ALS",
 			"ALSCamera"
@@ -28,16 +32,24 @@ public class BlackKnight : ModuleRules
 
 		if (Target.bBuildEditor)
 		{
-			// Editor-only: backs the BKCreateTestLevel commandlet (Source/BlackKnight/Editor).
-			// Guarded by WITH_EDITOR in code, so a Game-target build never needs this.
+			// Editor-only: backs the content-generating commandlets in
+			// Source/BlackKnight/Editor. Guarded by WITH_EDITOR in code, so a
+			// Game-target build never needs these.
 			PrivateDependencyModuleNames.Add("UnrealEd");
+			PrivateDependencyModuleNames.Add("AssetRegistry");
+			PrivateDependencyModuleNames.Add("AnimationCore");
 		}
 
 		PublicIncludePaths.AddRange(new string[] {
 			"BlackKnight",
+			"BlackKnight/AI",
 			"BlackKnight/Core",
 			"BlackKnight/Character",
+			"BlackKnight/Combat",
+			"BlackKnight/Combat/Animation",
+			"BlackKnight/Combat/Interfaces",
 			"BlackKnight/Editor",
+			"BlackKnight/UI",
 			"BlackKnight/Variant_Platforming",
 			"BlackKnight/Variant_Platforming/Animation",
 			"BlackKnight/Variant_Combat",
